@@ -1,0 +1,48 @@
+3 groupes :
+- n Client
+- 1 SM
+- m KVShard
+
+Le SM et les KVShard sont répliqués. Toutes les mises à jour d'état passent par Paxox pour
+imposer un ordre identique d'exécution des opérations. On peut donc considérer qu'ils sont
+uniques. La seule contrainte au niveau du client est d'utiliser un identifiant unique pour
+éviter d'effectuer deux fois la même opération sur les serveurs..
+
+ - pourquoi pas de UID pour les requêtes au SM ? 
+ - Idée -> ajouter un sanity check de cohérence du log
+
+Le SM définit la configuration courante :
+  . association shards -> groupes
+  . association groupes -> ensembles de réplicas  
+
+Les clients et les KVShards contactent le SM pour connaitre la configuration
+courante. Ils ne connaissent pas toujours la dernière configuration.  
+
+Principales fonctions sur le KVShard  
+
+Put, Get:
+    Client -> KVShard 
+
+GetShards:
+    KVShard - KVShard    
+
+tick:
+    KVShard -> KVShard
+    récupère la dernière configuration sur le serveur.  
+
+En cas de reconfiguration (détectée lors du tick) :
+ - sauvegarde shards dont je ne suis plus responsable 
+ - mise à jour configuration 
+
+ - Ne sert plus les requetes mal dirigées
+ - demande les shards dont j'ai besoin à celui qui les possède 
+
+Paxos:
+    - Client contacte tous les peers jusqu'à obtenir une réponse 
+    - Server utilise paxos pour enforcer un unique ordre de traitement des
+      requetes
+
+    - Questions : a-t-on besoin d'un paxos log sur le serveur ?
+
+
+
